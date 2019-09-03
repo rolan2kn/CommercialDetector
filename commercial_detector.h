@@ -1,0 +1,14 @@
+//
+// Created by rkindela on 28-08-19.
+//
+
+#ifndef COMMERCIALDETECTOR_COMMERCIAL_DETECTOR_H
+#define COMMERCIALDETECTOR_COMMERCIAL_DETECTOR_H
+
+
+class commercial_detector {
+
+};
+
+
+#endif //COMMERCIALDETECTOR_COMMERCIAL_DETECTOR_H
