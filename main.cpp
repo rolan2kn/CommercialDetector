@@ -10,37 +10,50 @@
 #include "feature_extraction_controller.h"
 #include "similarity_search_controller.h"
 
+//#define TV_VIDEO_PATH  "/home/rkindela/Documentos/RAMOS/Recuperacion de Informacion Multimedia/tarea_1/television/mega-2014_04_10.mp4"
+//#define TV_VIDEO_PATH  "/home/rkindela/Documentos/RAMOS/Recuperacion de Informacion Multimedia/tarea_1/television/"
+
+#define TV_VIDEO_PATH  "/mnt/D/RAMOS/Recuperacion de Informacion Multimedia/tarea_1/television/mega-2014_04_10.mp4"
+//#define TV_VIDEO_PATH  "/mnt/D/RAMOS/Recuperacion de Informacion Multimedia/tarea_1/television/"
+
+#define COMERCIALES_PATH "/mnt/D/RAMOS/Recuperacion de Informacion Multimedia/tarea_1/comerciales/"
+//#define COMERCIALES_PATH "/home/rkindela/Documentos/RAMOS/Recuperacion de Informacion Multimedia/tarea_1/comerciales/"
+
 using namespace cv;
 using namespace std;
 int main( int argc, char** argv )
 {
-    string currentDIr(directorio_actual() + "data");
-    string target_videos = "/television";
-    string fragment_videos = "/comerciales";
-    string tv(currentDIr + target_videos);
-    string comm(currentDIr + fragment_videos);
-    string cache(currentDIr + "/cache");
+    try
+    {
+        vector<std::string> args_param = get_args_vector(argc, argv);
+        string currentDIr(directorio_actual() + "data");
+        string tv;
+        string comm;
+        string cache(currentDIr + "/cache");
 
-    string tv_desc(cache + target_videos);
-    string com_desc(cache + fragment_videos);
-    SimilaritySearchController ssc(tv_desc, com_desc, cache);
-    ssc.fillData();
-//    FeatureExtractionController fec(tv, comm, cache);
-//    fec.execute();
+        if (args_param.size() < 3)
+        {
+            tv = TV_VIDEO_PATH;
+            comm = COMERCIALES_PATH;
+        }
+        else
+        {
+            tv = args_param[1];
+            comm = args_param[2];
+        }
 
+        string target_videos = "/television";
+        string fragment_videos = "/comerciales";
 
+//        FeatureExtractionController fec(tv, comm, cache, target_videos, fragment_videos);
+//        fec.execute();
 
-//    if( argc > 1)
-//    {
-//        imageName = argv[1];
-//    }
-//    Mat image;
-//    image = imread( imageName, -1 ); // Read the file
-//    if( image.empty() )                      // Check for invalid input
-//    {
-//        cout <<  "Could not open or find the image" << std::endl ;
-//        return -1;
-//    }
+        string tv_desc(cache + target_videos);
+        string com_desc(cache + fragment_videos);
+        SimilaritySearchController ssc(tv_desc, com_desc, cache);
+        ssc.fillData();
+        ssc.execute();
+
 //    Mat new_mat;
 //    cv::resize(image, new_mat, cv::Size(10, 10));
 //
@@ -58,6 +71,12 @@ int main( int argc, char** argv )
 //    imshow( "Display descriptor", new_mat );                // Show our image inside it.
 //    imshow( "Display recovered descriptor", recover_img );                // Show our image inside it.
 //    imshow( "Display window", image );                // Show our image inside it.
+    }
+    catch (exception& e)
+    {
+        cout<<endl<<e.what();
+    }
+
     waitKey(0); // Wait for a keystroke in the window
     return 0;
 }

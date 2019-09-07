@@ -13,9 +13,19 @@
 #include "video_metadata.h"
 #include "video_descriptor_controller.h"
 
-FeatureExtractionController::FeatureExtractionController(const string& _tv_path, const string& _commercial_path, const string& _cache, int desc_ps)
-:tv_path(_tv_path), commercial_path(_commercial_path), cache(_cache), descriptors_by_second(desc_ps)
+FeatureExtractionController::FeatureExtractionController(const string& _tv_path, const string& _commercial_path,
+                                                        const string& _cache, const string& target, const string& fragment, int desc_ps)
+: tv_path(_tv_path), commercial_path(_commercial_path), cache(_cache),
+target_name(target), comm_name(fragment), descriptors_by_second(desc_ps)
 {
+    if (target_name.empty())
+    {
+        target_name = "television";
+    }
+    if(comm_name.empty())
+    {
+        comm_name = "comerciales";
+    }
 }
 
 FeatureExtractionController::~FeatureExtractionController()
@@ -25,21 +35,32 @@ FeatureExtractionController::~FeatureExtractionController()
 
 void FeatureExtractionController::execute()
 {
-    vector<string> tv_videos = listar_archivos(tv_path);
-    vector<string> commercial_videos = listar_archivos(commercial_path);
-    string tv_name = basename(tv_path);
-    string comm_name = basename(commercial_path);
+    if (tv_path.empty())                                                                            // Chequeo integridad del directorio de tv
+        throw NewException("Se espera un archivo o directorio de videos de televisión");
 
-    if(cache.empty())
+    if (commercial_path.empty())                                                                    // Chequeo integridad del directorio de comerciales
+        throw NewException("Se espera un archivo o directorio de videos de comerciales");
+
+    vector<string> tv_videos = listar_archivos(tv_path);                                            // obtengo lista de videos de tv
+    vector<string> commercial_videos = listar_archivos(commercial_path);                            // obtengo lista de videos de comerciales
+
+    if (tv_videos.empty())                                                                  // si es un video de tv y no un directorio
+        tv_videos.push_back(tv_path);                                                       // agrego el video a la lista
+
+    if(commercial_videos.empty())                                                           // si es un video de comercial y no un directorio
+        commercial_videos.push_back(commercial_path);                                       // lo agrego a la lista
+
+    if(cache.empty())                                                                           // si el cache no existe
     {
-        cache = directorio_actual();
+        cache = directorio_actual() + "/data/cache";                                       // lo creo en el directorio actual
     }
 
-    for (auto tvvid : tv_videos)
+    for (auto tvvid : tv_videos)                                                            // por cada video de tv creo descriptores
     {
-        this->create_descriptors(tvvid, cache + "/" + tv_name);
+        this->create_descriptors(tvvid, cache + "/" + target_name);
     }
-    for (auto comvid : commercial_videos)
+
+    for (auto comvid : commercial_videos)                                                   // por cada video de comerciales creo descriptores
     {
         this->create_descriptors(comvid, cache + "/" + comm_name);
     }
@@ -60,6 +81,7 @@ void FeatureExtractionController::create_descriptors(const string& video_path, c
      * 2.3 llamar el metodo create_descriptor
      * 2.4 almacenar el descriptor en dec_dir y poner i como sufijo al nombre del fichero
      * */
+
     string video_desc_dir(outputdir + "/" + basename(video_path));
     crear_directorio(video_desc_dir);
 
@@ -81,31 +103,45 @@ void FeatureExtractionController::create_descriptors(const string& video_path, c
 
     while (capture.grab()) {
 
-        if(current_frame % offset != 0 && current_frame != frame_length)
+        if(current_frame % offset != 0 && /*current_frame % video_fps != 0 && */current_frame != frame_length)            //Si no es el ultimo frame y tampoco es un frame correspondiente al downsampling
         {
-            ++current_frame;
+            ++current_frame;                                                        // Salto el frame
             continue;
         }
 
-        string name = video_desc_dir + "/" + std::to_string(current_frame);
+        string name = video_desc_dir + "/" + std::to_string(current_frame);         // Genero el nombre del fichero del descriptor a partir del frame y el directorio del video/comercial
 
-        if (existe_archivo(name) || !capture.retrieve(frame))
+        if (existe_archivo(name) || !capture.retrieve(frame))                       // Si ya existe o no puedo acceder al frame actual
         {
-            current_frame += offset;
-            capture.set(cv::CAP_PROP_POS_FRAMES, current_frame);
+            ++current_frame;                                                        // Salto el frame
             continue;
         }
 
         //convertir a gris
-        cv::cvtColor(frame, frame_gris, cv::COLOR_BGR2GRAY);
+        cv::cvtColor(frame, frame_gris, cv::COLOR_BGR2GRAY);                  // Convierto a escala de grises
 
-        VideoDescriptorController* vdc = new VideoDescriptorController(vmd, frame, current_frame);
-        vdc->toFile(name);
-        ++current_frame;
+        mostrar_frame("Video", frame_gris, false, false);
+
+        VideoDescriptorController* vdc = new VideoDescriptorController(vmd, frame_gris, current_frame);                 // Creo el descriptor
+        vdc->toFile(name);                                                                                              // y lo guardo en el fichero "name"
+        mostrar_frame("desc saved", vdc->getCurrentDescriptor(), false, false);
+
+        VideoDescriptorController* rvdc = new VideoDescriptorController();                 // Creo el descriptor
+        rvdc->fromFile(name);                                                                                              // y lo guardo en el fichero "name"
+        mostrar_frame("desc loaded", rvdc->getCurrentDescriptor(), false, false);
+
+        ++current_frame;                                                                                                // paso al siguiente frame
+
+        char key = cv::waitKey(1) & 0xFF;
+        if (key == ' ')
+            key = cv::waitKey(0) & 0xFF;
+        if (key == 'q' or key == 27)
+            break;
+
         cout<<endl<<"PROCESSED: "<<name;
         cout.flush();
     }
 
-    capture.release();
-    cv::destroyAllWindows();
+    capture.release();                                  // Libero la captura
+    cv::destroyAllWindows();                            // Borro todas las figuras, frames y matrices
 }

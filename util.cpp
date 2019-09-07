@@ -78,11 +78,11 @@ std::string basename(const std::string &filename) {
 cv::VideoCapture abrir_video(const std::string &filename) {
 	cv::VideoCapture capture;
 	if (existe_archivo(filename)) {
-		std::cout << "abriendo archivo " << filename << std::endl;
+		std::cout <<std::endl<< "abriendo archivo " << filename << std::endl;
 		capture.open(filename);
 	} else {
 		int id_webcam = parse_int(filename);
-		std::cout << "abriendo camara " << id_webcam << std::endl;
+		std::cout <<std::endl<< "abriendo camara " << id_webcam << std::endl;
 		if (capture.open(id_webcam)) {
 			//leer el primer frame
 			cv::Mat frame;

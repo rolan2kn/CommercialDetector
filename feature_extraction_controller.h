@@ -13,11 +13,13 @@ private:
     string tv_path;
     string commercial_path;
     string cache;
+    string target_name;
+    string comm_name;
     int descriptors_by_second;
 private:
     void create_descriptors(const string& video_path, const string& outputdir = "");
 public:
-    FeatureExtractionController(const string& _tv_path, const string& _commercial_path, const string& _cache, int descriptors_per_second = 3);
+    FeatureExtractionController(const string& _tv_path, const string& _commercial_path, const string& _cache, const string& target, const string& fragment, int descriptors_per_second = 3);
     ~FeatureExtractionController();
     void execute();
 };

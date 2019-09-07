@@ -3,6 +3,7 @@
 #include <opencv2/videoio.hpp>
 #include <string>
 #include <vector>
+#include <exception>
 
 
 
@@ -31,6 +32,15 @@ std::string directorio_actual();
 bool crear_directorio(std::string& dir);
 
 bool existe_directorio(const std::string &dir);
+
+class NewException: public std::exception
+{
+private:
+    std::string error_msg;
+public:
+    NewException(const std::string& mesg): error_msg(mesg) {}
+    const std::string& what() {return error_msg;}
+};
 
 
 

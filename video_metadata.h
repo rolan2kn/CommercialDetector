@@ -9,6 +9,29 @@
 #include <fstream>
 using namespace std;
 
+/**
+ * VideoMetadata
+ *
+ * es una estructura que encapsula la informacion comun a todos los descriptores de un video
+ * y guarda los detalles para poder manipularlos facilmente
+ *
+ * Atributos:
+ *  - string name
+ *  es el directorio de la forma: <CUALQUIER_COSA>/DIR_PROYECTO/data/cache/<TIPO_VIDEO>/<NOMBRE_VIDEO>/
+ *  como todos los metadatos tienen el mismo nombre solo se diferencian por esta ruta
+ *
+ *  -frame_length
+ *  Tamaño en frame del video, esto determina el ultimo descriptor almacenado
+ *
+ *  -frame_per_second;
+ *  Frecuencia de muestreo, cantidad de frames por segundo,
+ *
+ *  - descriptors_per_second;
+ *  Cantidad de descriptores que se van a almacenar por un segundo, debe ser menor que frame_per_second
+ *
+ *  -offset;
+ *  Desplazamiento entre cada descriptor dentro del mismo video
+ * */
 struct VideoMetadata
 {
     string name;
