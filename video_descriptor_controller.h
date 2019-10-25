@@ -12,7 +12,7 @@
 #include "video_metadata.h"
 
 using namespace std;
-
+#define DESC_ORDER 10
 
 /**
  * VideoDescriptorController
@@ -25,6 +25,7 @@ using namespace std;
  *
  * eso facilita iterar por los descriptores la informacion de video se maneja mediante los metadatos
  *  *
+ *   *
  * */
 class VideoDescriptorController {
 private:
@@ -39,9 +40,14 @@ public:
     VideoDescriptorController(const VideoMetadata& vmd, const cv::Mat& frame, int _desc_id);
     ~VideoDescriptorController();
     double getEuclideanDistance(const VideoDescriptorController& vdc) const;
+    double getHammingDistance(const VideoDescriptorController& vdc) const;
+    double getManhattanDistance(const VideoDescriptorController& vdc) const;
+    double getDistance(const VideoDescriptorController& vdc) const;
     void toFile(const string& filename);
     bool fromFile(const string& filename);
+    bool goTo(int position);
     bool stepForward();
+    bool stepBackward();
     bool restart();
     bool anyDataRemains();
     inline const cv::Mat& getCurrentDescriptor() const {return this->current_descriptor;}

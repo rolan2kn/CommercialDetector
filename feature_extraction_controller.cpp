@@ -11,8 +11,16 @@
 #include <opencv2/videoio.hpp>
 
 #include "video_metadata.h"
-#include "video_descriptor_controller.h"
 
+
+
+/**
+ * FeatureExtractionController(const string& _tv_path, const string& _commercial_path,
+ *                                                        const string& _cache, const string& target, const string& fragment, int desc_ps)
+ *
+ * Contructor
+ *
+ * */
 FeatureExtractionController::FeatureExtractionController(const string& _tv_path, const string& _commercial_path,
                                                         const string& _cache, const string& target, const string& fragment, int desc_ps)
 : tv_path(_tv_path), commercial_path(_commercial_path), cache(_cache),
@@ -28,11 +36,21 @@ target_name(target), comm_name(fragment), descriptors_by_second(desc_ps)
     }
 }
 
+/***
+ * FeatureExtractionController::~FeatureExtractionController()
+ *
+ * Destructor
+ */
 FeatureExtractionController::~FeatureExtractionController()
 {
 
 }
 
+/**
+ *  FeatureExtractionController::execute()
+ *
+ *  Metodo que prepara las condiciones para crear los descriptores y almacenarlos.
+ * */
 void FeatureExtractionController::execute()
 {
     if (tv_path.empty())                                                                            // Chequeo integridad del directorio de tv
@@ -66,46 +84,52 @@ void FeatureExtractionController::execute()
     }
 }
 
+/**
+ * FeatureExtractionController::create_descriptors(const string& video_path, const string& outputdir)
+ *
+ * Metodo que crea los descriptores de un video, los almacena en un fichero con el siguiente formato:
+ *
+ * <CUALQUIER_COSA>/DIR_PROYECTO/data/cache/<TIPO_VIDEO>/<NOMBRE_VIDEO>/
+ *
+ * donde outputdir = cache + "/" + target_name
+ *
+ * y el nombre del fichero completo: outputdir + /<NOMBRE REAL DEL VIDEO>/<NUMERO DE FRAME>
+ *
+ * se utiliza el numero de frame para saber en todo momento dicha informacion.
+ *
+ * Tambien se crea un archivo de metadatos y se almacena en outputdir + /<NOMBRE REAL DEL VIDEO>/metadatos
+ *
+ * Ver estructura VideoMetadata
+ *
+ * */
 void FeatureExtractionController::create_descriptors(const string& video_path, const string& outputdir)
 {
-    /**
-     * Para crear los descriptores de un video hay que hacer lo siguiente:
-     *
-     * 1. generar los nombres de fichero para almacenar los descriptores
-     * 1.1 sacar el nombre del video de video_path
-     * 1.2 crear el directorio con el nombre del video video_desc_dir = outputdir/video_name/
-     *
-     * 2. crear cada descriptor y almacenarlo en el video_desc_dir
-     * 2.1 abrir el video
-     * 2.2 pedir frame i*freq_rate; freq_rate = video_freq_pseg / 3
-     * 2.3 llamar el metodo create_descriptor
-     * 2.4 almacenar el descriptor en dec_dir y poner i como sufijo al nombre del fichero
-     * */
-
-    string video_desc_dir(outputdir + "/" + basename(video_path));
+    if(!existe_archivo(video_path))
+        throw NewException("EL archivo de video no existe, quizas el directorio este erroneo");
+    string video_desc_dir(outputdir + "/" + basename(video_path));             // se crea el directorio correspondiente al video
     crear_directorio(video_desc_dir);
 
-    cv::VideoCapture capture = abrir_video(video_path);
+    cv::VideoCapture capture = abrir_video(video_path);                        // se abre el video
 
-    cv::Mat frame, frame_gris, output_frame, output_frame_gris;
-    int current_frame = 0, video_fps = capture.get(cv::CAP_PROP_FPS);
+    cv::Mat frame, frame_gris;
+    int current_frame = 0, video_fps = capture.get(cv::CAP_PROP_FPS);   // se obtienen algunos metadatos
 
-    if(this->descriptors_by_second > video_fps)
-        this->descriptors_by_second = video_fps;
+    if(this->descriptors_by_second > video_fps)                                // y se configuran los descriptores por segundo
+        this->descriptors_by_second = 3;
     else if(this->descriptors_by_second == 0)
-        this->descriptors_by_second = 1;
+        this->descriptors_by_second = 3;
 
-    int offset = video_fps/this->descriptors_by_second;
-    int frame_length = capture.get(cv::CAP_PROP_FRAME_COUNT);
+    int offset = video_fps/(this->descriptors_by_second);                       // se define el offset en funcion de los descriptores por segundo
+    int frame_length = capture.get(cv::CAP_PROP_FRAME_COUNT);          // y se obtiene la cantidad de frames total del video
 
-    VideoMetadata vmd(video_desc_dir, frame_length, video_fps, this->descriptors_by_second);
-    vmd.toFile(video_desc_dir+"/"+VideoMetadata::metadataFileName());
+    VideoMetadata vmd(video_desc_dir, frame_length, video_fps, this->descriptors_by_second);        // se definen los metadatos
+    vmd.toFile(video_desc_dir+"/"+VideoMetadata::metadataFileName());                               // y se almacenan
 
     while (capture.grab()) {
 
-        if(current_frame % offset != 0 && /*current_frame % video_fps != 0 && */current_frame != frame_length)            //Si no es el ultimo frame y tampoco es un frame correspondiente al downsampling
+        if(current_frame % offset != 0)            //Si no es el ultimo frame y tampoco es un frame correspondiente al downsampling
         {
-            ++current_frame;                                                        // Salto el frame
+            ++current_frame;                                                        // entonces no me interesa y lo salto
             continue;
         }
 
@@ -120,25 +144,12 @@ void FeatureExtractionController::create_descriptors(const string& video_path, c
         //convertir a gris
         cv::cvtColor(frame, frame_gris, cv::COLOR_BGR2GRAY);                  // Convierto a escala de grises
 
-        mostrar_frame("Video", frame_gris, false, false);
+         VideoDescriptorController* vdc = new VideoDescriptorController(vmd, frame_gris, current_frame);                 // Creo el descriptor
+         vdc->toFile(name);                                                                                                              // y lo guardo en el fichero "name"
 
-        VideoDescriptorController* vdc = new VideoDescriptorController(vmd, frame_gris, current_frame);                 // Creo el descriptor
-        vdc->toFile(name);                                                                                              // y lo guardo en el fichero "name"
-        mostrar_frame("desc saved", vdc->getCurrentDescriptor(), false, false);
+        ++current_frame;
 
-        VideoDescriptorController* rvdc = new VideoDescriptorController();                 // Creo el descriptor
-        rvdc->fromFile(name);                                                                                              // y lo guardo en el fichero "name"
-        mostrar_frame("desc loaded", rvdc->getCurrentDescriptor(), false, false);
-
-        ++current_frame;                                                                                                // paso al siguiente frame
-
-        char key = cv::waitKey(1) & 0xFF;
-        if (key == ' ')
-            key = cv::waitKey(0) & 0xFF;
-        if (key == 'q' or key == 27)
-            break;
-
-        cout<<endl<<"PROCESSED: "<<name;
+        cout<<endl<<"DESCRIPTOR PROCESSED: "<<name;
         cout.flush();
     }
 

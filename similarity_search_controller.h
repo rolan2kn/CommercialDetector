@@ -55,12 +55,9 @@ public:
     SimilaritySearchController(const string& _tv_desc_path, const string& _commercial_desc_path, const string& _cache);
     ~SimilaritySearchController();
     void execute();
-    void execute1();
     void fillData();
-    void updateCommercials(const vector<int>& vdcs);
-    void kClosestAccordingToEuclidean(int k, const VideoDescriptorController* target_descriptor, vector<int>& closest);
-    void saveClosenessInformation(const VideoDescriptorController* target_descriptor, vector<int>& closest);
-    void compareAllAndSave(int pos);
+    void detectKClosestCommercialFrames(int k, const VideoDescriptorController* target_descriptor);
+    void saveClosenessInformation(const VideoDescriptorController* target_descriptor, const string& info);
     string getClosenessInformationFileName();
 };
 

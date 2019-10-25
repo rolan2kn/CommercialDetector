@@ -33,6 +33,8 @@ bool crear_directorio(std::string& dir);
 
 bool existe_directorio(const std::string &dir);
 
+std::vector<std::string> dividir_cadena(const std::string& target, const std::string& split_sequence);
+
 class NewException: public std::exception
 {
 private:

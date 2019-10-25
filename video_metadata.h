@@ -44,6 +44,7 @@ struct VideoMetadata
     void toFile(const string& filename);
     void fromFile(const string& filename);
     string getNextDescriptorName(int currentDescriptor);
+    string getPrevDescriptorName(int currentDescriptor);
     inline bool isValid(){return (!name.empty() && frame_length > 0 && frame_per_second > 0);}
     static string metadataFileName(){return "metadata";}
 };

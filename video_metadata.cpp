@@ -13,10 +13,10 @@
  * se utiliza al construir los descriptores
  * */
 VideoMetadata::VideoMetadata(const string& _name, int _frame_length, int _fps, int dps)
-:name(_name), frame_length(_frame_length), frame_per_second(_fps),descriptors_per_second(dps)
+:name(_name), frame_length(_frame_length), frame_per_second(_fps), descriptors_per_second(dps)
 {
     descriptors_per_second = (descriptors_per_second != 0) ? descriptors_per_second : 1;
-    this->offset = frame_per_second/descriptors_per_second;
+    this->offset = frame_per_second/(descriptors_per_second);
 }
 
 /**
@@ -82,6 +82,7 @@ void VideoMetadata::fromFile(const string& filename)
     }
     input_file.close();
 }
+
 /**
  * VideoMetadata::getNextDescriptorName(int currentDescriptor)
  *
@@ -94,10 +95,30 @@ string VideoMetadata::getNextDescriptorName(int currentDescriptor)
     int next = currentDescriptor + offset;              // se calcula el proximo descriptor
 
     if (next > frame_length)                            // si sobrepasa el ultimo
-    next = frame_length;                                // se acota
+        next = frame_length;                                // se acota
 
     string filename(this->name + "/" + std::to_string(next));       // se crea el nombre de fichero
     if(existe_archivo(filename))                                    // si existe el descriptor buscado
         return filename;                                            // se retorna
     return string();                                                // si no existe se retorna cadena vacia
+}
+
+/**
+ * VideoMetadata::getPrevDescriptorName(int currentDescriptor)
+ *
+ * Metodo que retorna el nombre del anterior descriptor a partir del parametro
+ *
+ * si no es posible obtenerlo se retorna el string vacio
+ * */
+string VideoMetadata::getPrevDescriptorName(int currentDescriptor)
+{
+    int prev = currentDescriptor - offset;              // se calcula el anterior descriptor
+
+    if (prev < 0)                            // si sobrepasa el primero
+        prev = 0;                                // se acota
+
+    string filename(this->name + "/" + std::to_string(prev));       // se crea el nombre de fichero
+    if(existe_archivo(filename))                                    // si existe el descriptor buscado
+        return filename;                                            // se retorna
+    return string();
 }

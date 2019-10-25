@@ -5,22 +5,25 @@
 #include <iostream>
 #include <string>
 #include <fstream>
+#include <vector>
 #include "util.hpp"
 
 #include "feature_extraction_controller.h"
 #include "similarity_search_controller.h"
+#include "commercial_detector.h"
 
 //#define TV_VIDEO_PATH  "/home/rkindela/Documentos/RAMOS/Recuperacion de Informacion Multimedia/tarea_1/television/mega-2014_04_10.mp4"
 //#define TV_VIDEO_PATH  "/home/rkindela/Documentos/RAMOS/Recuperacion de Informacion Multimedia/tarea_1/television/"
-
-#define TV_VIDEO_PATH  "/mnt/D/RAMOS/Recuperacion de Informacion Multimedia/tarea_1/television/mega-2014_04_10.mp4"
-//#define TV_VIDEO_PATH  "/mnt/D/RAMOS/Recuperacion de Informacion Multimedia/tarea_1/television/"
+//
+//#define TV_VIDEO_PATH  "/mnt/D/RAMOS/Recuperacion de Informacion Multimedia/tarea_1/television/mega-2014_04_10.mp4"
+#define TV_VIDEO_PATH  "/mnt/D/RAMOS/Recuperacion de Informacion Multimedia/tarea_1/television/"
 
 #define COMERCIALES_PATH "/mnt/D/RAMOS/Recuperacion de Informacion Multimedia/tarea_1/comerciales/"
 //#define COMERCIALES_PATH "/home/rkindela/Documentos/RAMOS/Recuperacion de Informacion Multimedia/tarea_1/comerciales/"
 
 using namespace cv;
 using namespace std;
+
 int main( int argc, char** argv )
 {
     try
@@ -31,10 +34,9 @@ int main( int argc, char** argv )
         string comm;
         string cache(currentDIr + "/cache");
 
-        if (args_param.size() < 3)
+        if (args_param.size() != 3)
         {
-            tv = TV_VIDEO_PATH;
-            comm = COMERCIALES_PATH;
+            throw NewException("Se esperaban los argumentos");
         }
         else
         {
@@ -45,8 +47,8 @@ int main( int argc, char** argv )
         string target_videos = "/television";
         string fragment_videos = "/comerciales";
 
-//        FeatureExtractionController fec(tv, comm, cache, target_videos, fragment_videos);
-//        fec.execute();
+        FeatureExtractionController fec(tv, comm, cache, target_videos, fragment_videos);
+        fec.execute();
 
         string tv_desc(cache + target_videos);
         string com_desc(cache + fragment_videos);
@@ -54,29 +56,28 @@ int main( int argc, char** argv )
         ssc.fillData();
         ssc.execute();
 
-//    Mat new_mat;
-//    cv::resize(image, new_mat, cv::Size(10, 10));
-//
-//    string name = cache + "/" + std::to_string(1);
-//    ofstream descriptor_file(name, ios::binary);
-//    descriptor_file.write( (char *) &new_mat, sizeof(cv::Mat ) );
-//    descriptor_file.close();
-//    cv::Mat recover_img;
-//    ifstream descriptor_f(name, ios::binary);
-//    descriptor_f.read((char *) &recover_img, sizeof(cv::Mat ) );
-//    descriptor_f.close();
-//
-//    namedWindow( "Display window", WINDOW_AUTOSIZE ); // Create a window for display.
-//    namedWindow( "Display resized window", WINDOW_AUTOSIZE ); // Create a window for display.
-//    imshow( "Display descriptor", new_mat );                // Show our image inside it.
-//    imshow( "Display recovered descriptor", recover_img );                // Show our image inside it.
-//    imshow( "Display window", image );                // Show our image inside it.
+        string closenessFile(cache + "/closeness");
+        CommercialDetector cd(cache, closenessFile, 0.75f);
+        cd.execute();
+
     }
-    catch (exception& e)
+    catch (NewException& ne)
+    {
+        cout<<endl<<ne.what();
+        cout<<endl<<"###########################";
+        cout<<endl<<"### CommercialDetector Usage";
+        cout<<endl<<"Dependencias g++, cmake 3.13, OpenCV 4 ";
+        cout<<endl<<"para ejecutar abrir la consola y escribir el ejecutable \nseguido del directorio de los videos de television";
+        cout<<", y seguido del directorio de los Comerciales. \nNOTA: se puede poner directamente un nombre de archivo de television en rutas absolutas:\n";
+        cout<<endl<<">> CommercialDetector <VIDEO_PATH or VIDEO_FILENAME> <COMMERCIAL_PATH>\n\n";
+    }
+    catch (std::exception& e)
     {
         cout<<endl<<e.what();
     }
 
+
     waitKey(0); // Wait for a keystroke in the window
+    cv::destroyAllWindows();
     return 0;
 }

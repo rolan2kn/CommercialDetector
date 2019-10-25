@@ -259,3 +259,21 @@ bool crear_directorio(std::string& dir)
     }
     return true;
 }
+
+std::vector<std::string> dividir_cadena(const std::string& target, const std::string& split_sequence)
+{
+    std::vector<std::string> parts;
+
+    std::string::size_type prev_pos = 0, pos = 0;
+
+    while((pos = target.find(split_sequence, pos)) != std::string::npos)
+    {
+        parts.push_back(target.substr(prev_pos, pos-prev_pos));
+        pos += split_sequence.size();
+        prev_pos = pos;
+    }
+    if(prev_pos > 0)
+        parts.push_back(target.substr(prev_pos, target.size()-prev_pos));
+
+    return parts;
+};
