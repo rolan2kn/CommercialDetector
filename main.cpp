@@ -12,15 +12,6 @@
 #include "similarity_search_controller.h"
 #include "commercial_detector.h"
 
-//#define TV_VIDEO_PATH  "/home/rkindela/Documentos/RAMOS/Recuperacion de Informacion Multimedia/tarea_1/television/mega-2014_04_10.mp4"
-//#define TV_VIDEO_PATH  "/home/rkindela/Documentos/RAMOS/Recuperacion de Informacion Multimedia/tarea_1/television/"
-//
-//#define TV_VIDEO_PATH  "/mnt/D/RAMOS/Recuperacion de Informacion Multimedia/tarea_1/television/mega-2014_04_10.mp4"
-#define TV_VIDEO_PATH  "/mnt/D/RAMOS/Recuperacion de Informacion Multimedia/tarea_1/television/"
-
-#define COMERCIALES_PATH "/mnt/D/RAMOS/Recuperacion de Informacion Multimedia/tarea_1/comerciales/"
-//#define COMERCIALES_PATH "/home/rkindela/Documentos/RAMOS/Recuperacion de Informacion Multimedia/tarea_1/comerciales/"
-
 using namespace cv;
 using namespace std;
 
@@ -29,7 +20,7 @@ int main( int argc, char** argv )
     try
     {
         vector<std::string> args_param = get_args_vector(argc, argv);
-        string currentDIr(directorio_actual() + "data");
+        string currentDIr(directorio_actual() + "/data");
         string tv;
         string comm;
         string cache(currentDIr + "/cache");
