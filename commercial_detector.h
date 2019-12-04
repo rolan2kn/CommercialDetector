@@ -49,9 +49,10 @@ private:
     VideoDescriptorController* video_dc;
     int** voting_table;
 public:
-    CommercialDetector(const string& cache, const string& closenessInfo, float tolerance = 0.75f);
+    CommercialDetector(const string& cache, const string& closenessInfo, float tolerance = 0.85f);
     ~CommercialDetector();
     void execute();
+    void create_clean_file();
     void init();
     void reset();
     void computeVote(const string& video_segment, const string& com_segment, long frame_no, long com_no);

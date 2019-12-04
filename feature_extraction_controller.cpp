@@ -112,7 +112,8 @@ void FeatureExtractionController::create_descriptors(const string& video_path, c
     cv::VideoCapture capture = abrir_video(video_path);                        // se abre el video
 
     cv::Mat frame, frame_gris;
-    int current_frame = 0, video_fps = capture.get(cv::CAP_PROP_FPS);   // se obtienen algunos metadatos
+    int current_frame = 0;
+    int video_fps = ceil(capture.get(cv::CAP_PROP_FPS));   // se obtienen algunos metadatos
 
     if(this->descriptors_by_second > video_fps)                                // y se configuran los descriptores por segundo
         this->descriptors_by_second = 3;
@@ -127,7 +128,7 @@ void FeatureExtractionController::create_descriptors(const string& video_path, c
 
     while (capture.grab()) {
 
-        if(current_frame % offset != 0)            //Si no es el ultimo frame y tampoco es un frame correspondiente al downsampling
+        if(current_frame % (offset-1) != 0)            //Si no es el ultimo frame y tampoco es un frame correspondiente al downsampling
         {
             ++current_frame;                                                        // entonces no me interesa y lo salto
             continue;
@@ -137,7 +138,7 @@ void FeatureExtractionController::create_descriptors(const string& video_path, c
 
         if (existe_archivo(name) || !capture.retrieve(frame))                       // Si ya existe o no puedo acceder al frame actual
         {
-            ++current_frame;                                                        // Salto el frame
+            ++current_frame;                                                         // Salto el frame
             continue;
         }
 

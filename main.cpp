@@ -40,7 +40,7 @@ int main( int argc, char** argv )
 
         FeatureExtractionController fec(tv, comm, cache, target_videos, fragment_videos);
         fec.execute();
-
+//
         string tv_desc(cache + target_videos);
         string com_desc(cache + fragment_videos);
         SimilaritySearchController ssc(tv_desc, com_desc, cache);
@@ -48,7 +48,7 @@ int main( int argc, char** argv )
         ssc.execute();
 
         string closenessFile(cache + "/closeness");
-        CommercialDetector cd(cache, closenessFile, 0.75f);
+        CommercialDetector cd(cache, closenessFile, 0.78f);
         cd.execute();
 
     }

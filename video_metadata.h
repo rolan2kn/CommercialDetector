@@ -38,7 +38,7 @@ struct VideoMetadata
     int frame_length;
     int frame_per_second;
     int descriptors_per_second;
-    int offset;
+    float offset;
     VideoMetadata();
     VideoMetadata(const string& _name, int _frame_length, int _fps, int dps);
     void toFile(const string& filename);

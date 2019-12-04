@@ -137,7 +137,8 @@ void CommercialDetector::reset()
 
 void CommercialDetector::execute()
 {
-    this->closenessInfo = ifstream(this->info_filename, ios::binary);
+    this->closenessInfo = ifstream(this->info_filename);
+//    this->closenessInfo = ifstream(this->info_filename, ios::binary);
     if(!closenessInfo.is_open())
         throw NewException("Se esperaba poder abrir el fichero de resultados del proceso de busqueda de similitud");
 
@@ -178,11 +179,97 @@ void CommercialDetector::execute()
             this->reset();
         }
 
+        if (commercial_name.find("vtr") != -1)
+        {
+//            cout<<endl<<"video_name:"<<video_name<<" frame_no: "<<frame_no<<"-- commer_name:"<<commercial_name<<" com_no:"<<comm_no;
+        }
+        else if (commercial_name.find("mall plaza (2)") != -1)
+        {
+//            cout<<endl<<"video_name:"<<video_name<<" frame_no: "<<frame_no<<"-- commer_name:"<<commercial_name<<" com_no:"<<comm_no;
+        }
+        else if (commercial_name.find("scotiabank") != -1)
+        {
+
+        }
+        else if (commercial_name.find("falabella") != -1)
+        {
+
+        }
+        else if (commercial_name.find("pantene") != -1)
+        {
+
+        }
+        else if (commercial_name.find("cristal") != -1)
+        {
+
+        }
+        else if (commercial_name.find("dove") != -1)
+        {
+
+        }
+        else if (commercial_name.find("omo") != -1)
+        {
+
+        }
+        else if (commercial_name.find("samsung") != -1)
+        {
+
+        }
+        else if (commercial_name.find("ferreteria") != -1)
+        {
+
+        }
+
+
         computeVote(video_name, commercial_name, frame_no, comm_no);
     }
 
     closenessInfo.close();
     result.close();
+}
+
+void CommercialDetector::create_clean_file()
+{
+    string new_file = this->cache + "/clean_file.txt";
+    this->closenessInfo = ifstream(this->info_filename);
+    ofstream cleanInfo(new_file);
+    if(!closenessInfo.is_open())
+        throw NewException("Se esperaba poder abrir el fichero de resultados del proceso de busqueda de similitud");
+    if (!cleanInfo.is_open())
+            throw NewException("Se esperaba poder abrir el fichero");
+
+    int count = 0;
+    while(!closenessInfo.eof())
+    {
+        char _line[1024] = {'\0'};
+        closenessInfo.read( (char *) &_line, sizeof(_line) );      // cargamos el nombre
+        string line(_line);
+        if(line.empty())
+            continue;
+
+        int filepos = line.find("##"), frame_no, comm_no, compos = line.rfind("##");
+        int seppos = line.find("--");
+        string video_name, commercial_name;
+        if (filepos != -1 && seppos != -1)
+        {
+            video_name = line.substr(0, filepos);
+            string no = line.substr(filepos+2, seppos-filepos-2);
+            frame_no = parse_int(no);
+        }
+
+        if(compos != -1 && seppos != -1)
+        {
+            string no = line.substr(compos+2, line.size()-compos-2);
+            commercial_name = line.substr(seppos+2, compos-seppos-2);
+
+            comm_no = parse_int(no);
+        }
+
+        cleanInfo << video_name <<" "<<frame_no<<" -> "<<commercial_name<<" "<<comm_no<<endl;
+    }
+
+    closenessInfo.close();
+    cleanInfo.close();
 }
 
 void CommercialDetector::computeVote(const string& video_segment, const string& com_segment, long frame_no, long com_no)
@@ -199,7 +286,7 @@ void CommercialDetector::computeVote(const string& video_segment, const string& 
 
     if(!di.isValid())
     {
-        di.update(frame_no, 0);
+        di.update(frame_no, com_no);
     }
 
     long vid_diff = frame_no - di.current_frame;
@@ -207,20 +294,13 @@ void CommercialDetector::computeVote(const string& video_segment, const string& 
     long vdps = vmd.descriptors_per_second;
     long cdps = cvmd.descriptors_per_second+1;
 
-    if( vid_diff/vmd.offset < vdps/**3 &&
-        abs(com_diff)/cvmd.offset < cdps*/ )
+    if(vid_diff < vdps*vmd.offset)
     {
-        if (this->voting_table[vpos][cpos] == 0)
-        {
-            di.video_init_frame = frame_no;
-            di.com_init_frame = com_no;
-        }
-
         ++this->voting_table[vpos][cpos];
 
-        int totalDescriptors = (cvmd.frame_length/cvmd.offset);
+        int totalDescriptors = (cvmd.descriptors_per_second*(cvmd.frame_length/30) );
         di.update(frame_no, com_no);
-        if(this->voting_table[vpos][cpos] >= totalDescriptors*tolerance)
+        if(this->voting_table[vpos][cpos] >= totalDescriptors)
         {
             this->reportingResults(di, frame_no, com_no);
 
@@ -230,9 +310,8 @@ void CommercialDetector::computeVote(const string& video_segment, const string& 
     }
     else if (di.isValid())
     {
-        this->voting_table[vpos][cpos] = 1;
-//        di.reset();
-        di.update(frame_no, com_no);
+        this->voting_table[vpos][cpos] = 0;
+        di.reset();
     }
 }
 
@@ -258,18 +337,19 @@ void CommercialDetector::reportingResults(const DetectionInfo& di, long frame_no
 {
     const VideoMetadata& vmd = this->video_dc->getMetadata();
     const VideoMetadata& cvmd = di.com_dc->getMetadata();
+    int vfps = vmd.frame_per_second;
 
-    float dur = ((float)(frame_no - di.video_init_frame))/vmd.frame_per_second;
+    float dur = ((float)(frame_no - di.video_init_frame))/vfps;
 
     cout<<endl<<basename(this->video_dc->getMetadata().name);                // tv show name
-    cout<<"\t"<< ((float)di.video_init_frame)/vmd.frame_per_second;                                       // init time in seconds
+    cout<<"\t"<< ((float)di.video_init_frame)/vfps;                                       // init time in seconds
     cout<<"\t"<< dur;               // time duration in seconds
     cout<<"\t"<< basename(cvmd.name);                                                    // commercial name
     cout<<"\t"<< this->computeAccuracy(di, com_no);                                          // accuracy
 
     this->result<<endl<<basename(this->video_dc->getMetadata().name);                // tv show name
-    this->result<<"\t"<< ((float)di.video_init_frame)/vmd.frame_per_second;                            // init time in seconds
-    this->result<<"\t"<< ((float)(frame_no - di.video_init_frame))/vmd.frame_per_second;               // time duration in seconds
+    this->result<<"\t"<< ((float)di.video_init_frame)/vfps;                            // init time in seconds
+    this->result<<"\t"<< ((float)(frame_no - di.video_init_frame))/vfps;               // time duration in seconds
     this->result<<"\t"<< basename(cvmd.name);                                                    // commercial name
     this->result<<"\t"<< this->computeAccuracy(di, com_no);                                          // accuracy
 }

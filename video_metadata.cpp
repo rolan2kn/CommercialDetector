@@ -16,7 +16,7 @@ VideoMetadata::VideoMetadata(const string& _name, int _frame_length, int _fps, i
 :name(_name), frame_length(_frame_length), frame_per_second(_fps), descriptors_per_second(dps)
 {
     descriptors_per_second = (descriptors_per_second != 0) ? descriptors_per_second : 1;
-    this->offset = frame_per_second/(descriptors_per_second);
+    this->offset = (frame_per_second/(descriptors_per_second))-1;
 }
 
 /**
@@ -78,7 +78,7 @@ void VideoMetadata::fromFile(const string& filename)
         input_file.read( (char *) &frame_length, sizeof(int) );     // y todo lo demas
         input_file.read( (char *) &frame_per_second, sizeof(int) );
         input_file.read( (char *) &descriptors_per_second, sizeof(int) );
-        this->offset = frame_per_second/descriptors_per_second;
+        this->offset = (frame_per_second/descriptors_per_second)-1;
     }
     input_file.close();
 }
